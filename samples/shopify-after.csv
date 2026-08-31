@@ -1,0 +1,4 @@
+Handle,Title,Option1 Name,Option1 Value,Variant SKU,Variant Price,Image Src,Status
+coffee-mug,Coffee Mug,Color,White,CM-WHT,1980,https://example.com/coffee-white.jpg,active
+coffee-mug,,Color,Black,CM-BLK,1980,https://example.com/coffee-black.jpg,active
+coffee-plate,Ceramic Plate,,,CP-01,not-a-price,not-a-url,unknown
