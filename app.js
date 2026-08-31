@@ -5,6 +5,7 @@ import {
   analyzeCsv,
   createMarkdownReport,
 } from "./src/csv-engine.mjs";
+import { createCorrectedCsv } from "./src/csv-fixer.mjs";
 
 const elements = {
   profile: document.querySelector("#profile"),
@@ -22,11 +23,14 @@ const elements = {
   issueCount: document.querySelector("#issue-count"),
   checkedAt: document.querySelector("#checked-at"),
   issueList: document.querySelector("#issue-list"),
+  correctionSummary: document.querySelector("#correction-summary"),
+  downloadCorrected: document.querySelector("#download-corrected"),
   downloadMarkdown: document.querySelector("#download-markdown"),
   downloadJson: document.querySelector("#download-json"),
 };
 
 let latestResult = null;
+let latestCorrection = null;
 
 function setStatus(message, kind = "") {
   elements.status.textContent = message;
@@ -78,7 +82,26 @@ function renderIssues(result) {
   }
 }
 
-function renderResult(result) {
+function renderCorrection(correction) {
+  latestCorrection = correction;
+  elements.downloadCorrected.disabled = !correction.canExport;
+  if (!correction.canExport) {
+    elements.correctionSummary.textContent = `自動修正は停止: ${correction.reason}`;
+    elements.correctionSummary.dataset.kind = "error";
+    elements.downloadCorrected.textContent = "修正版CSVを書き出す";
+    return;
+  }
+
+  elements.downloadCorrected.textContent = correction.changeCount
+    ? `修正版CSVを書き出す（${correction.changeCount}件修正）`
+    : "正規化済みCSVを書き出す";
+  elements.correctionSummary.textContent = correction.changeCount
+    ? `${correction.changeCount}件を安全に自動修正。未解決のエラー・注意は${correction.unresolvedCount}件です。`
+    : `自動修正できる箇所はありません。未解決のエラー・注意は${correction.unresolvedCount}件です。`;
+  elements.correctionSummary.dataset.kind = correction.unresolvedCount ? "warning" : "pass";
+}
+
+function renderResult(result, correction) {
   latestResult = result;
   elements.result.hidden = false;
   elements.resultBadge.textContent = result.status;
@@ -89,6 +112,7 @@ function renderResult(result) {
   elements.issueCount.textContent = String(result.errors + result.warnings);
   elements.checkedAt.textContent = formatTime(result.generatedAt);
   renderIssues(result);
+  renderCorrection(correction);
   elements.downloadMarkdown.disabled = false;
   elements.downloadJson.disabled = false;
   setStatus(`${result.status}: ${result.summary}`, result.status.toLowerCase());
@@ -98,16 +122,18 @@ function renderResult(result) {
 function analyze() {
   const profileId = elements.profile.value;
   const source = elements.input.value;
-  if (!source.trim()) {
-    setStatus("CSVを選択するか、テキストを貼り付けてください。", "error");
-  }
-  renderResult(analyzeCsv(source, profileId));
+  if (!source.trim()) setStatus("CSVを選択するか、テキストを貼り付けてください。", "error");
+  const result = analyzeCsv(source, profileId);
+  const correction = createCorrectedCsv(source, profileId);
+  renderResult(result, correction);
 }
 
 function loadSample(profileId) {
   elements.profile.value = profileId;
   elements.input.value = profileId === "generic" ? SAMPLE_CSV_GENERIC : SAMPLE_CSV_SHOPIFY;
   elements.file.value = "";
+  latestCorrection = null;
+  elements.downloadCorrected.disabled = true;
   setStatus("サンプルを読み込みました。チェックを実行してください。", "info");
   elements.input.focus();
 }
@@ -134,6 +160,8 @@ elements.file.addEventListener("change", async () => {
   }
   try {
     elements.input.value = await file.text();
+    latestCorrection = null;
+    elements.downloadCorrected.disabled = true;
     setStatus(`${file.name}を読み込みました。内容はこのブラウザ内にあります。`, "info");
   } catch {
     setStatus("ファイルを読み込めませんでした。テキストを貼り付けてください。", "error");
@@ -143,6 +171,13 @@ elements.file.addEventListener("change", async () => {
 elements.analyze.addEventListener("click", analyze);
 elements.sampleShopify.addEventListener("click", () => loadSample("shopify"));
 elements.sampleGeneric.addEventListener("click", () => loadSample("generic"));
+
+elements.downloadCorrected.addEventListener("click", () => {
+  if (!latestCorrection?.canExport) return;
+  const profile = elements.profile.value === "shopify" ? "shopify" : "ec";
+  download(`${profile}-products-corrected.csv`, `\uFEFF${latestCorrection.csv}\r\n`, "text/csv;charset=utf-8");
+  setStatus(`修正版CSVを書き出しました。未解決項目${latestCorrection.unresolvedCount}件はレポートで確認してください。`, latestCorrection.unresolvedCount ? "review" : "pass");
+});
 
 elements.downloadMarkdown.addEventListener("click", () => {
   if (!latestResult) return;
@@ -162,4 +197,3 @@ for (const [id, profile] of Object.entries(PROFILES)) {
 }
 elements.profile.value = "shopify";
 setStatus("CSVを選択するか、サンプルを読み込んでください。", "info");
-
