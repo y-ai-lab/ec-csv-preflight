@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="EC商品CSVを取込前にブラウザ内でチェックする無料MVP" />
+    <title>EC CSV Preflight</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell site-header__inner">
+        <a class="brand" href="./">EC CSV <span>Preflight</span></a>
+        <span class="header-chip">MVP 0.1 / local-first</span>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">EC OPERATIONS / IMPORT QA</p>
+        <h1 id="page-title">商品CSVの取込前チェックを、<em>ブラウザ内で。</em></h1>
+        <p class="hero__lead">欠損・重複・価格の崩れ・画像URL・バリエーションの不整合を、アップロード前に確認します。CSVの内容は外部へ送信しません。</p>
+        <div class="trust-row" aria-label="このMVPの特徴">
+          <span>追加費用 0円</span>
+          <span>ログイン不要</span>
+          <span>ネットワーク送信なし</span>
+        </div>
+      </section>
+
+      <section class="workbench panel" aria-labelledby="input-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / INPUT</p>
+            <h2 id="input-title">CSVを読み込む</h2>
+          </div>
+          <p class="section-note">最大15MB。UTF-8のCSVを推奨。</p>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span class="field__label">チェック対象</span>
+            <select id="profile"></select>
+          </label>
+          <label class="field field--file">
+            <span class="field__label">CSVファイル</span>
+            <input id="csv-file" type="file" accept=".csv,text/csv" />
+          </label>
+        </div>
+
+        <div class="sample-row">
+          <span>入力例：</span>
+          <button id="sample-shopify" class="button button--text" type="button">Shopify</button>
+          <button id="sample-generic" class="button button--text" type="button">汎用EC</button>
+        </div>
+
+        <label class="field">
+          <span class="field__label">CSVテキスト</span>
+          <textarea id="csv-input" rows="10" spellcheck="false" placeholder="CSVファイルを選択するか、ここへ貼り付けてください"></textarea>
+        </label>
+        <div class="action-row">
+          <button id="analyze" class="button button--primary" type="button">取込前チェックを実行</button>
+          <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="result" class="result panel" aria-labelledby="result-title" hidden>
+        <div class="result__top">
+          <div>
+            <p class="eyebrow">02 / RESULT</p>
+            <h2 id="result-title">チェック結果</h2>
+          </div>
+          <span id="result-badge" class="result-badge">HOLD</span>
+        </div>
+        <p id="result-summary" class="result__summary"></p>
+
+        <div class="stats" aria-label="集計">
+          <div class="stat"><span>対象行</span><strong id="row-count">0</strong></div>
+          <div class="stat"><span>商品グループ</span><strong id="product-count">0</strong></div>
+          <div class="stat"><span>エラー・注意</span><strong id="issue-count">0</strong></div>
+          <div class="stat"><span>チェック日時</span><strong id="checked-at">—</strong></div>
+        </div>
+
+        <div class="issues-heading">
+          <h3>検出した論点</h3>
+          <p>行番号を手がかりに元CSVを修正し、再チェックしてください。</p>
+        </div>
+        <ul id="issue-list" class="issue-list"></ul>
+
+        <div class="download-row">
+          <button id="download-markdown" class="button button--secondary" type="button" disabled>Markdownレポート</button>
+          <button id="download-json" class="button button--secondary" type="button" disabled>JSONレポート</button>
+        </div>
+      </section>
+
+      <section class="how panel" aria-labelledby="how-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / BOUNDARY</p>
+            <h2 id="how-title">このMVPがすること</h2>
+          </div>
+        </div>
+        <div class="boundary-grid">
+          <div><span class="boundary-icon">✓</span><strong>ブラウザ内で検査</strong><p>ファイルをサーバーへアップロードせず、CSVの構造と値だけを確認します。</p></div>
+          <div><span class="boundary-icon">→</span><strong>修正箇所を示す</strong><p>エラー・注意・参考に分け、該当行と次の確認事項を表示します。</p></div>
+          <div><span class="boundary-icon">!</span><strong>成功を保証しない</strong><p>取込先の最新仕様、権限、在庫・画像の状態などは別途確認が必要です。</p></div>
+        </div>
+        <details class="details">
+          <summary>公開資産と0円運用について</summary>
+          <p>データ品質チェックの設計はMITライセンスの <a href="https://github.com/onlozanoo/databroom" target="_blank" rel="noreferrer">databroom</a>、可視化の方向性はMITの <a href="https://github.com/graphieros/vue-data-ui" target="_blank" rel="noreferrer">vue-data-ui</a> など公開資産を調査して選定しました。MVP本体は依存ゼロの静的JavaScriptで、コード・モデル・外部APIを追加購入しません。</p>
+          <p>Shopifyの列依存・UTF-8・インポートエラーの確認観点は、公式ヘルプを参照しています。対象サービスの仕様変更時は再確認してください。</p>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site-footer shell">
+      <span>EC CSV Preflight / AI VENTURE BUILDER MVP</span>
+      <span>Local-only processing · No account · No paid API</span>
+    </footer>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
