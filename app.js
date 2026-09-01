@@ -6,6 +6,7 @@ import {
   createMarkdownReport,
 } from "./src/csv-engine.mjs";
 import { createCorrectedCsv } from "./src/csv-fixer.mjs";
+import { createDeliveryBundle, createNeedsReviewMarkdown } from "./src/delivery-pack.mjs";
 
 const elements = {
   profile: document.querySelector("#profile"),
@@ -25,6 +26,7 @@ const elements = {
   issueList: document.querySelector("#issue-list"),
   correctionSummary: document.querySelector("#correction-summary"),
   downloadCorrected: document.querySelector("#download-corrected"),
+  downloadNeedsReview: document.querySelector("#download-needs-review"),
   downloadMarkdown: document.querySelector("#download-markdown"),
   downloadJson: document.querySelector("#download-json"),
 };
@@ -115,6 +117,7 @@ function renderResult(result, correction) {
   renderCorrection(correction);
   elements.downloadMarkdown.disabled = false;
   elements.downloadJson.disabled = false;
+  elements.downloadNeedsReview.disabled = false;
   setStatus(`${result.status}: ${result.summary}`, result.status.toLowerCase());
   elements.result.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -184,9 +187,14 @@ elements.downloadMarkdown.addEventListener("click", () => {
   download("ec-csv-preflight-report.md", createMarkdownReport(latestResult), "text/markdown;charset=utf-8");
 });
 
+elements.downloadNeedsReview.addEventListener("click", () => {
+  if (!latestResult) return;
+  download("shopify-csv-needs-review.md", createNeedsReviewMarkdown(latestResult, latestCorrection), "text/markdown;charset=utf-8");
+});
+
 elements.downloadJson.addEventListener("click", () => {
   if (!latestResult) return;
-  download("ec-csv-preflight-report.json", `${JSON.stringify(latestResult, null, 2)}\n`, "application/json;charset=utf-8");
+  download("ec-csv-preflight-delivery.json", `${JSON.stringify(createDeliveryBundle(latestResult, latestCorrection), null, 2)}\n`, "application/json;charset=utf-8");
 });
 
 for (const [id, profile] of Object.entries(PROFILES)) {

@@ -1,4 +1,4 @@
-# Shopify CSV Preflight v0.2
+# Shopify CSV Preflight v0.3
 
 Shopifyの商品CSVを登録前にチェックし、**安全に確定できる修正だけ自動適用して修正版CSVを書き出す**、依存ゼロの静的MVPです。
 
@@ -14,14 +14,16 @@ Shopifyの商品CSVを登録前にチェックし、**安全に確定できる�
 - Status値
 - 表計算ソフト由来のエラー値
 - HOLD / REVIEW / PASS 判定
-- Markdown / JSONレポート
+- Markdownレポート / 納品JSON
+- NEEDS_REVIEW専用一覧
+- 安全修正の変更履歴
 - **修正版CSVの書き出し**
 
 入力はブラウザ内だけで処理し、サーバー・外部API・データベースへ送信しません。
 
 ## 安全な自動修正
 
-v0.2では、意味を変えない範囲だけ自動修正します。
+v0.3では、意味を変えない範囲だけ自動修正し、修正ログと未解決一覧を納品パックへ含めます。
 
 例：
 
@@ -47,7 +49,7 @@ v0.2では、意味を変えない範囲だけ自動修正します。
 
 ## Shopify仕様との境界
 
-2026-08-31時点のShopify公式ヘルプでは、商品CSVについてUTF-8、正しいヘッダー、価格、画像URL、オプション構造などの整合性が重要とされています。Status列がある場合の有効値は `active` / `draft` / `archived` です。
+2026-09-01時点のShopify公式ヘルプでは、商品CSVについて正しいヘッダー、価格、画像URL、オプション構造などの整合性が重要とされています。Status列がある場合の有効値は `active` / `draft` / `archived` です。
 
 - https://help.shopify.com/en/manual/products/import-export/using-csv
 - https://help.shopify.com/en/manual/products/import-export/common-import-issues
@@ -77,6 +79,7 @@ npm run verify
 - Shopify基本チェック
 - 安全な価格・空白・Status修正
 - 修正後CSVの再チェック
+- NEEDS_REVIEWと納品JSONの生成
 - SKU重複や欠損を勝手に補完しない
 - 列数不一致では自動修正停止
 
@@ -103,7 +106,9 @@ GitHub Actionsでもpush時にQAを実行します。
 - 商品：Shopify商品CSV 登録前チェック＋修正版CSV納品
 - 初期価格：5,000円
 - 販売チャネル：ココナラ
-- 納品物：修正版CSV / エラー一覧 / 要確認箇所
+- 納品物：修正版CSV / NEEDS_REVIEW / Markdownレポート / 納品JSON / 納品サマリー
+
+販売素材と運用テンプレートは `sales/` にあります。最初の有料受注1件を取るまでは、Dashboard・Login・SaaS化・APIなどの追加開発を停止します。
 
 ## ライセンス
 

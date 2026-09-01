@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { analyzeCsv, createMarkdownReport, parseCsv } from "../src/csv-engine.mjs";
 import { createCorrectedCsv, serializeCsv } from "../src/csv-fixer.mjs";
+import { createDeliveryBundle, createNeedsReviewMarkdown } from "../src/delivery-pack.mjs";
 
 const validShopify = [
   "Handle,Title,Option1 Name,Option1 Value,Variant SKU,Variant Price,Image Src,Status",
@@ -66,6 +67,12 @@ assert.ok(noGuess.unresolved.some((issue) => issue.code === "MISSING_PRICE_VALUE
 assert.ok(noGuess.unresolved.some((issue) => issue.code === "DUPLICATE_SKU"));
 assert.ok(noGuess.unresolved.some((issue) => issue.code === "INVALID_IMAGE_URL"));
 assert.match(noGuess.csv, /item,Item,DUP,,bad-url/);
+const needsReview = createNeedsReviewMarkdown(noGuess.result, noGuess);
+assert.match(needsReview, /NEEDS_REVIEW/);
+assert.match(needsReview, /DUPLICATE_SKU/);
+const bundle = createDeliveryBundle(noGuess.result, noGuess);
+assert.equal(bundle.safeguards.guessedValues, false);
+assert.ok(bundle.needsReview.length >= 3);
 
 const structuralMismatch = createCorrectedCsv([
   "Handle,Title,Variant Price",
